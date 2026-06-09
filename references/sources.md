@@ -18,6 +18,7 @@
 | 2026-04-09 | `6af8089` | sync to upstream latest（baseline = v2.5.1，规则 1-29） | blader/humanizer |
 | 2026-05-04 | （chinese-ai-tells.md 创建） | `references/chinese-ai-tells.md`：10 条中文规则 + 张晨腔 vs AI 腔判别框架（4 判别问 + 三色标） | 梁樊导师 2026-05-04 反馈 10 条 + 仓库 `工具与环境/写作风格/` 6 篇笔记 |
 | 2026-06-09 | `ab0effd` | chinese-ai-tells 新增规则 11 外交腔 + 规则 6/10 增强 + 示弱真伪边界 + 判别问 2 格言对举；SKILL.md description/Bilingual/Process 计数 10→11 | **qiu-zhijie-persona** skill 反外交病机制提取（会话 `9e4cb53e`） |
+| 2026-06-09 | （本批 → origin/main） | chinese-ai-tells 规则 10 新增「情绪的体感锚定」维度（体感记忆 vs 知识性描述）+ 多样范例光谱 + 两道判别（填空 + 替换测试）+ 反模式警告（防体感词退化成新套话，配套规则 10「不要假装口语」机制）+ 文体门控 | **khazix-writer** skill 提取（公众号写作 persona 的通用人感判据，剥离自媒体语域）|
 
 ## 上游同步状态（2026-06-09 核查）
 

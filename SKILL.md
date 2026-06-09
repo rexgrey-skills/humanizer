@@ -1,6 +1,6 @@
 ---
 name: humanizer
-version: 2.5.1
+version: 2.8.0-zh
 description: |
   Remove signs of AI-generated writing from text. Use when editing or reviewing
   text to make it sound more natural and human-written. Based on Wikipedia's
@@ -8,6 +8,9 @@ description: |
   inflated symbolism, promotional language, superficial -ing analyses, vague
   attributions, em dash overuse, rule of three, AI vocabulary words, passive
   voice, negative parallelisms, and filler phrases.
+  Includes Chinese-specific AI tells via references/chinese-ai-tells.md (auto-loaded
+  for Chinese-majority text, 11 rules covering 量子词汇/顿号/真正的/本质上/不是…而是
+  /强制诗性/时态排比/冒号引号/外交腔 + 张晨腔 vs AI 腔判别框架).
 license: MIT
 compatibility: claude-code opencode
 allowed-tools:
@@ -90,6 +93,26 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 
 
 ## CONTENT PATTERNS
+
+### Bilingual Mode (Chinese Detection)
+
+When processing text where ≥30% characters are CJK (Chinese/Japanese/Korean),
+you MUST also Read `references/chinese-ai-tells.md` BEFORE auditing. The Chinese
+module covers patterns absent from the 33 English rules below:
+- Physics/math metaphors abuse (跃迁/纠缠/破壁/升维/褶皱/张力/维度)
+- 顿号 (Chinese enumeration comma) information-density disease
+- "不是 X 而是 Y" / "本质上是" / "真正的" rhetorical patterns
+- Forced poetic metaphors ("以 X 为 Y, 以 X 为 Y")
+- Tense parallel ("当 X 已经 Y; 当 X 已经 Y")
+- Diplomatic/false-balance hedging (各有千秋/见仁见智/都值得尊重 — Chinese variant of rule 22 Sycophancy, evades judgment via fake balance)
+
+The Chinese module also includes the 张晨腔 vs AI 腔 discrimination framework
+(4 questions + 三色标 green/yellow/red) which protects legitimate dialectical
+patterns in academic Chinese writing from false positives.
+
+For pure English or English-majority text, proceed directly with the 33 rules below.
+
+---
 
 ### 1. Undue Emphasis on Significance, Legacy, and Broader Trends
 
@@ -461,24 +484,112 @@ Avoiding AI patterns is only half the job. Sterile, voiceless writing is just as
 >
 > When users hit a slow page, they leave.
 
+
+### 30. Diff-Anchored Writing
+
+**Problem:** Documentation or comments written as if narrating a change rather than describing the thing as it is. Unless the document is inherently version-scoped (changelogs, release notes, migration guides), it should read coherently without knowing what changed in the last commit.
+
+**Before:**
+> This function was added to replace the previous approach of iterating through all items, which caused O(n²) performance.
+
+**After:**
+> This function uses a hash map for O(1) lookups, avoiding the O(n²) cost of naive iteration.
+
+
+### 31. Manufactured Punchlines and Staccato Drama
+
+**Problem:** LLMs often make every sentence land like a quotable closer, then stack short declarative fragments to manufacture drama. A single short sentence for emphasis is fine; a run of them starts to sound engineered.
+
+**Before:**
+> Then AlphaEvolve arrived. It had no preference for symmetry. No aesthetic prior. No nostalgia for human taste. The old rules were gone.
+
+**After:**
+> AlphaEvolve changed the search because it did not favor symmetry or human-looking designs. That made some of the older assumptions less useful.
+
+
+### 32. Aphorism Formulas
+
+**Words to watch:** X is the Y of Z, X becomes a trap, X is not a tool but a mirror, the language of, the currency of, the architecture of
+
+**Problem:** LLMs turn ordinary claims into reusable aphorisms that sound profound without adding precision. Replace the formula with the concrete claim it is gesturing at.
+
+**Before:**
+> Symmetry is the language of trust. Efficiency becomes a trap when teams forget the human layer.
+
+**After:**
+> Symmetric layouts often feel more predictable to users. Teams can over-optimize workflows and miss how people actually use them.
+
+**Chinese-context exemption (架构保护):** This rule targets HOLLOW aphorism formulas — interchangeable, no specific referent, profundity without precision. It does NOT apply to legitimate 格言体对举 (aphoristic antithesis anchored to a concrete referent). Qiu Zhijie–style "不是媒体的效果，而是媒体本身" / "不是展览，而是事件" embeds a specific critical judgment and collapses under the substitution test (swap "媒体/展览" for an abstract topic and it falls apart). For Chinese aphoristic parallels, run the 4 discrimination questions in `references/chinese-ai-tells.md` (判别问 2 + 格言体对举谱系) BEFORE flagging. English formulas like "X is the Y of Z" remain flagged.
+
+
+### 33. Conversational Rhetorical Openers
+
+**Phrases to watch:** Honestly?, Look, Here's the thing, The thing is, Let's be honest, Real talk, when used as standalone hooks or fake-candid pauses before an ordinary point.
+
+**Problem:** LLMs open with a fake-candid hook to manufacture intimacy before delivering a routine claim. The tell is the theatrical pause-and-reveal: a one-word question or aside, then the "real" answer. A person being honest usually just says the thing.
+
+**Before:**
+> Is it worth the price? Honestly? It depends on how often you'll use it.
+
+**After:**
+> Whether it's worth the price depends on how often you'll use it.
+
+
+## DETECTION GUIDANCE
+
+> For Chinese-majority text, the parallel "don't over-flag" mechanism is the 张晨腔 vs AI 腔 framework + 三色标 in `references/chinese-ai-tells.md` (4 判别问 protect legitimate academic 对举/格言 from false positives). The guidance below is the English-side equivalent.
+
+### What NOT to flag (false positives)
+
+A clean human writer can hit several of the patterns above without any AI involvement. Before rewriting, sanity-check that you are not gutting legitimate prose. The following are *not* reliable indicators on their own:
+
+- **Perfect grammar and consistent style.** Many writers are professionals or have been edited. Polish does not equal AI.
+- **Mixed casual and formal registers.** This often signals a person in a technical field, a young writer, or someone with neurodivergent prose habits — not a chatbot.
+- **"Bland" or "robotic" prose.** AI prose has *specific* tells. Generic dryness without those tells is just dry writing.
+- **Formal or academic vocabulary.** AI overuses *specific* fancy words (see §7), not all fancy words. Don't flatten "ostensibly" or "constituent" just because they sound brainy.
+- **Letter-style opening or closing on a comment.** Salutations and sign-offs predate ChatGPT by centuries.
+- **Common transition words in isolation.** *Additionally*, *moreover*, *consequently* are AI-coded only when piled up. One *however* is not a tell.
+- **Curly quotes alone.** macOS, Word, Google Docs, and most CMSes auto-curl by default. Curly quotes only count when stacked with other tells.
+- **Em dashes alone.** Many editors and journalists use them often. Em dashes are evidence only when paired with formulaic sales-y rhythm.
+- **One short emphatic sentence.** Humans use clipped sentences to land a point. Flag staccato drama only when several short fragments appear in a row and inflate the tone.
+- **"Honestly" or "look" mid-sentence.** These are ordinary in casual writing. The tell is the standalone theatrical opener, not the word itself.
+- **Unsourced claims.** Most of the web is unsourced. Lack of citations doesn't prove anything.
+- **Correct, complex formatting.** Visual editors and templates produce clean output without any AI.
+
+When in doubt, look for **clusters** of tells, not isolated ones. A single em dash means nothing; em dashes plus rule-of-three plus *vibrant tapestry* plus a "Conclusion" section is a confession.
+
+
+### Signs of human writing (preserve these)
+
+When you see these, lean toward leaving the prose alone — they are evidence of a real person writing, and over-editing will destroy what makes the piece sound human:
+
+- **Specific, unusual, hard-to-fabricate detail.** A real address. A weird quote. The phrase "the lawyer who used to work upstairs from my dentist." LLMs round off specifics; humans hoard them.
+- **Mixed feelings and unresolved tension.** "I think this is mostly good, but it bothers me, and I can't fully explain why." LLMs default to clean takes.
+- **Dated, era-bound references.** Slang, memes, or in-jokes that map to a specific year and subculture. Models lag by a year or more.
+- **First-person editorial choices the writer can defend.** If the writer can explain *why* they made a particular cut or used a particular word, that's a strong human signal.
+- **Variety in sentence length.** Real writing alternates short and long. AI writing tends toward an even, mid-length cadence.
+- **Genuine asides, parentheticals, or self-corrections.** "(I keep wanting to say 'almost' here, but it really was certain.)" Models rarely interrupt themselves like this.
+- **Edits made before November 30, 2022.** ChatGPT's public launch. Anything older than that is, with very rare exceptions, not AI-written.
+
 ---
 
 ## Process
 
 1. Read the input text carefully
-2. Identify all instances of the patterns above
-3. Rewrite each problematic section
-4. Ensure the revised text:
+2. **Detect language ratio**: If ≥30% CJK characters, ALSO Read `references/chinese-ai-tells.md` and run its 11 rules in parallel with the English 33 rules. For Chinese text matching 张晨腔 patterns (negative parallel "不是 X 而是 Y", essentialist "本质上"), apply the 4 discrimination questions BEFORE flagging.
+3. Identify all instances of the patterns above
+4. Rewrite each problematic section
+5. Ensure the revised text:
    - Sounds natural when read aloud
    - Varies sentence structure naturally
    - Uses specific details over vague claims
    - Maintains appropriate tone for context
    - Uses simple constructions (is/are/has) where appropriate
-5. Present a draft humanized version
-6. Prompt: "What makes the below so obviously AI generated?"
-7. Answer briefly with the remaining tells (if any)
-8. Prompt: "Now make it not obviously AI generated."
-9. Present the final version (revised after the audit)
+6. Present a draft humanized version
+7. Prompt: "What makes the below so obviously AI generated?"
+8. Answer briefly with the remaining tells (if any)
+9. Prompt: "Now make it not obviously AI generated."
+10. Present the final version (revised after the audit)
 
 ## Output Format
 
